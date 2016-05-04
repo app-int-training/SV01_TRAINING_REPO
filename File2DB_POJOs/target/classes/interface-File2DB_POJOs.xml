@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd">
+    <flow name="interface-File2DB_POJOsFlow">
+        <file:inbound-endpoint path="${INPUT_DIR}" moveToDirectory="${OUTPUT_DIR}" connector-ref="File" pollingFrequency="${POLLING_FREQUENCY}" fileAge="${FILE_AGE}" responseTimeout="10000" doc:name="File"/>
+        <dw:transform-message metadata:id="c1b4b1fe-44a1-4481-b32b-cd5d7418d0d4" doc:name="CSV-POJO">
+            <dw:input-payload doc:sample="list_csv_3.csv"/>
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+payload map $]]></dw:set-payload>
+        </dw:transform-message>
+        <set-session-variable variableName="CSV_FILE_DATA" value="#[payload]" doc:name="Session Variable"/>
+        <transactional action="ALWAYS_BEGIN" doc:name="Transactional">
+            <db:insert config-ref="MySQL_Configuration" bulkMode="true" doc:name="Database">
+                <db:parameterized-query><![CDATA[insert into tbl_txn_details(ACCNT_ID,TRNSFR_VLU) 
+values(#[map-payload:ACCOUNT_ID],#[map-payload:TXN_VALUE]);]]></db:parameterized-query>
+            </db:insert>
+            <expression-component doc:name="Expression"><![CDATA[payload=sessionVars.CSV_FILE_DATA;]]></expression-component>
+            <component class="com.appintegrators.training.corejava.util.Main" doc:name="Java"/>
+            <logger message="TotalSum: #[payload]" level="INFO" doc:name="Logger"/>
+            <db:insert config-ref="MySQL_Configuration" doc:name="Database">
+                <db:parameterized-query><![CDATA[insert into tbl_txn_mt_dt(TRNSFR_TTL) 
+values(#[payload]);]]></db:parameterized-query>
+            </db:insert>
+        </transactional>
+        <logger message="logger6:#[payload]" level="INFO" doc:name="Logger"/>
+    </flow>
+</mule>

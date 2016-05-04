@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:context="http://www.springframework.org/schema/context" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-current.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+    <context:property-placeholder location="classpath:es_config_file2DB_POJOs_sql.properties,es_config_file2DB_POJOs.properties"/>
+	<spring:beans>
+        <spring:bean id="dataSource" name="Bean" class="org.apache.commons.dbcp.BasicDataSource">
+            <spring:property name="driverClassName" value="${GET_DRIVER_CLASSNAME}"/>
+            <spring:property name="url" value="${GET_URL}"/>
+            <spring:property name="username" value="${GET_USERNAME}"/>
+            <spring:property name="password" value="${GET_PASSWORD}"/>
+        </spring:bean>
+    </spring:beans>
+    <db:mysql-config name="MySQL_Configuration" dataSource-ref="dataSource" doc:name="MySQL Configuration"/>
+</mule>
