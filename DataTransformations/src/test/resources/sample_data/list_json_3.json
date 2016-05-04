@@ -1,0 +1,30 @@
+[{
+	"airlineName": "JetAir",
+	"price": 23200,
+	"departureDate": "2015/06/13",
+	"planeType": "Boeing 737",
+	"origination": "HYD",
+	"flightCode": "ER38sd",
+	"availableSeats": 40,
+	"destination": "SFO"
+},
+{
+	"airlineName": "Indigo",
+	"price": 25100,
+	"departureDate": "2015/06/11",
+	"planeType": "Boeing 777",
+	"origination": "HYD",
+	"flightCode": "ER39rk",
+	"availableSeats": 54,
+	"destination": "SFO"
+},
+{
+	"airlineName": "SpiceJet",
+	"price": 22900,
+	"departureDate": "2015/06/12",
+	"planeType": "Boeing 784",
+	"origination": "HYD",
+	"flightCode": "ER39rj",
+	"availableSeats": 23,
+	"destination": "SFO"
+}]
