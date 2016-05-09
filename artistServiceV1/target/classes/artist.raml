@@ -1,0 +1,32 @@
+#%RAML 0.8
+title: "RAML file for exposing Artist data"
+version: 1.0
+baseUri: http://app-integrators.com/app-int-training/api/userService
+
+documentation:
+- title: Service to expose User data
+  content: Service API to expose User data
+mediaType: application/json
+
+/{artistId}:
+    description: Artist entity
+    get:
+      description: Get the Artist using `artistId = {artistId}`
+      responses:
+        200:
+          body:
+            application/json:
+              example: |
+                {
+                  "artistId": "01001057817",
+                  "firstName": "Sam",
+                  "lastName": "",
+                  "artistName": "Cooke",
+                  "receivedDate": "2011-05-06 11:04:52.0"                  
+                }
+                
+        404:
+          body:
+            application/json:
+              example: |
+                {"message": "Song not found"}
