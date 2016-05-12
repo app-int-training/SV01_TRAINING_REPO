@@ -1,0 +1,119 @@
+#%RAML 0.8
+title: "RAML file for exposing Artist data"
+version: 1.0
+baseUri: http://app-integrators.com/app-int-training/api/userService
+
+documentation:
+- title: Service to expose User data
+  content: Service API to expose User data
+mediaType: application/json
+
+resourceTypes:
+  - readOnlyCollection:
+      description: Collection of available <<resourcePathName>>.
+      get:
+        description: Get a list of <<resourcePathName>>.
+        responses:
+          200:
+            body:
+              application/json:
+                example: |
+                  <<exampleCollection>>
+  - collection:
+      description: Collection of available <<resourcePathName>>.
+      get:
+        description: Get a list of <<resourcePathName>>.
+        responses:
+          200:
+            body:
+              application/json:
+                example: |
+                  <<exampleCollection>>
+      post:
+        description: | 
+          Add a new <<resourcePathName|!singularize>>.
+        queryParameters:
+          access_token:
+            description: "The access token provided by the authentication application"
+            example: AABBCCDD
+            required: true
+            type: string
+        body:
+          application/json:
+            schema: <<resourcePathName|!singularize>>
+            example: |
+              <<exampleItem>>
+        responses:
+          200:
+            body:
+              application/json:
+                example: |
+                  { "message": "The <<resourcePathName|!singularize>> has been properly entered" }
+                  
+  - collection-item:
+      description: Entity representing a <<resourcePathName|!singularize>>
+      get:
+        description: |
+          Get the <<resourcePathName|!singularize>>
+          with <<resourcePathName|!singularize>>Id =
+          {<<resourcePathName|!singularize>>Id}
+        responses:
+          200:
+            body:
+              application/json:
+                example: |
+                  <<exampleItem>>
+          404:
+            body:
+              application/json:
+                example: |
+                  {"message": "<<resourcePathName|!singularize>> not found" }
+                  
+traits:
+  - searchable:
+      queryParameters:
+        query:
+          description: |
+            JSON array [{"field1","value1","operator1"},{"field2","value2","operator2"},...,{"fieldN","valueN","operatorN"}] <<description>>
+          example: |
+            <<example>>
+  - orderable:
+      queryParameters:
+        orderBy:
+          description: |
+            Order by field: <<fieldsList>>
+          type: string
+          required: false
+        order:
+          description: Order
+          enum: [desc, asc]
+          default: desc
+          required: false
+  - pageable:
+      queryParameters:
+        offset:
+          description: Skip over a number of elements by specifying an offset value for the query
+          type: integer
+          required: false
+          example: 20
+          default: 0
+        limit:
+          description: Limit the number of elements on the response
+          type: integer
+          required: false
+          example: 80
+          default: 10
+
+schemas:
+  - artist !include artist.schema
+
+/artists:
+  post:
+    description: "Create a new Artist"
+    body:
+      example: !include artist.sample
+      
+  /{artistId}:
+      type:
+        collection-item:
+          exampleItem: !include artist.sample
