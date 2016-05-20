@@ -1,0 +1,24 @@
+[
+{
+	"clientID":"12345",
+	"language":"EN",
+	"title":"Artist album title is TEST",
+	"artistID":"01001057817",
+	"firstName":"Sam",
+	"lastNamePrefix":"",
+	"artistName":"Cooke",
+	"searchInfo":"",
+	"receivedDate":"2011-05-06"
+},
+{
+	"clientID":"67890",
+	"language":"FR",
+	"title":"Artist album title is TEST2",
+	"artistID":"71875010010",
+	"firstName":"Richard",
+	"lastNamePrefix":"",
+	"artistName":"Williams",
+	"searchInfo":"",
+	"receivedDate":"2015-01-02"
+}
+]

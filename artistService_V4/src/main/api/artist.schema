@@ -1,0 +1,46 @@
+artist: |
+	{
+	  "type": "object",
+	  "$schema": "http://json-schema.org/draft-03/schema",
+	  "id": "http://jsonschema.net",
+	  "required":false,
+	  "properties": {
+	    "clientID": {
+	      "type": "string",
+	      "required":true
+	    },
+	    "language": {
+	      "type": "string",
+	      "required": true
+	    },
+	    "title": {
+	      "type": "string",
+	      "required": true
+	    },
+		"artistID":{
+			"type": "string",
+			"required": true
+		},
+		"firstName":{
+			"type": "string",
+			"required": true
+		},
+		"lastNamePrefix":{
+			"type": "string",
+			"required": true
+		},
+		"artistName":{
+			"type": "string",
+			"required": true
+		},
+		"searchInfo":{
+			"type": "string",
+			"required": true
+		},
+		"receivedDate":{
+			"type": "string",
+			"required": true,
+			"format": "YYYY-MM-DD"
+		}
+	  }
+	}

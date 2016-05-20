@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:cluster="http://www.mulesoft.org/schema/mule/ee/cluster" xmlns:scripting="http://www.mulesoft.org/schema/mule/scripting" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mule/scripting/current/mule-scripting.xsd">
+    <http:listener-config name="artist-httpListenerConfig" host="0.0.0.0" port="8081" doc:name="HTTP Listener Configuration"/>
+    <apikit:config name="artist-config" raml="artist.raml" consoleEnabled="true" consolePath="console" doc:name="Router">
+    </apikit:config>
+    <flow name="artist-main">
+        <http:listener config-ref="artist-httpListenerConfig" path="/api/*" doc:name="HTTP"/>
+        <apikit:router config-ref="artist-config" doc:name="APIkit Router"/>
+        <exception-strategy ref="artist-apiKitGlobalExceptionMapping" doc:name="Reference Exception Strategy"/>
+
+    </flow>
+    <flow name="get:/artists:artist-config">
+        <db:select config-ref="MySQL_Configuration" doc:name="Database">
+            <db:parameterized-query><![CDATA[select * from tbl_artists;]]></db:parameterized-query>
+        </db:select>
+        <logger message="#[payload:java.lang.String]" level="INFO" doc:name="Logger"/>
+
+    </flow>
+    <flow name="get:/artists/{artistId}:artist-config">
+        <db:select config-ref="MySQL_Configuration" doc:name="Database">
+            <db:parameterized-query><![CDATA[select * from tbl_artists where artistID=#[flowVars['artistId']];]]></db:parameterized-query>
+        </db:select>
+        <choice doc:name="Choice">
+            <when expression="#[payload.size()==0]">
+                <logger message="*** No Artist found *** returning 404 error" level="INFO" doc:name="Logger"/>
+                <set-property propertyName="#[&quot;http.status&quot;]" value="#[&quot;404&quot;]" doc:name="Property"/>
+                <scripting:component doc:name="Groovy">
+                    <scripting:script engine="Groovy"><![CDATA[throw new org.mule.module.apikit.exception.NotFoundException("Artist not found!!!");]]></scripting:script>
+                </scripting:component>
+            </when>
+            <otherwise>
+                <logger message="*** Artist found *** #[payload]" level="INFO" doc:name="Logger"/>
+            </otherwise>
+        </choice>
+
+
+    </flow>
+
+    <flow name="post:/artists:artist-config">
+        <json:json-to-object-transformer returnClass="java.util.HashMap" doc:name="JSON to Object"/>
+        <db:insert config-ref="MySQL_Configuration" doc:name="Database">
+            <db:parameterized-query><![CDATA[insert into tbl_artists(clientID,lang,title,artistID,firstName,lastNamePrefix,artistName,searchInfo,receivedDate) values(#[payload.clientID],#[payload.language],#[payload.title],#[payload.artistID],#[payload.firstName],#[payload.lastNamePrefix],#[payload.artistName],#[payload.serachInfo],#[payload.receivedDate]);]]></db:parameterized-query>
+        </db:insert>
+        <logger message="#[payload:java.lang.String]" level="INFO" doc:name="Logger"/>
+
+    </flow>
+    <apikit:mapping-exception-strategy name="artist-apiKitGlobalExceptionMapping">
+
+        <apikit:mapping statusCode="404">
+            <apikit:exception value="org.mule.module.apikit.exception.NotFoundException"/>
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="#[&quot;Artist not found - Error 404&quot;]" mimeType="application/json" doc:name="Set Payload"/>
+        </apikit:mapping>
+
+        <apikit:mapping statusCode="405">
+            <apikit:exception value="org.mule.module.apikit.exception.MethodNotAllowedException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Method not allowed&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="415">
+            <apikit:exception value="org.mule.module.apikit.exception.UnsupportedMediaTypeException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Unsupported media type&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="406">
+            <apikit:exception value="org.mule.module.apikit.exception.NotAcceptableException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Not acceptable&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="400">
+            <apikit:exception value="org.mule.module.apikit.exception.BadRequestException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Bad request&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="500">
+            <apikit:exception value="javax.ws.rs.InternalServerErrorException"/>
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Internal Server Error&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+
+
+    </apikit:mapping-exception-strategy>
+</mule>
