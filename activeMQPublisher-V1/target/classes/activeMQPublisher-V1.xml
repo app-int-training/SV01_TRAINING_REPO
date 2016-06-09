@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:jms="http://www.mulesoft.org/schema/mule/jms" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd">
+    <flow name="activeMQPublisher-V1Flow">
+        <file:inbound-endpoint path="${INPUT_DIR}" moveToDirectory="${OUTPUT_DIR}" connector-ref="File" pollingFrequency="${POLLING_FREQUENCY}" fileAge="${FILE_AGE}" responseTimeout="10000" doc:name="File"/>
+        <component class="com.appintegrators.training.corejava.util.Main" doc:name="Java"/>
+        <logger message="#[payload]" level="INFO" doc:name="Logger"/>
+        <jms:outbound-endpoint queue="ArtistsQueue" connector-ref="Active_MQ" doc:name="JMS"/>
+    </flow>
+</mule>
