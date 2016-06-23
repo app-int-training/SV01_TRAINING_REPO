@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:quartz="http://www.mulesoft.org/schema/mule/quartz" xmlns:scripting="http://www.mulesoft.org/schema/mule/scripting" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:mulexml="http://www.mulesoft.org/schema/mule/xml" xmlns:email="http://www.mulesoft.org/schema/mule/email" xmlns:wmq="http://www.mulesoft.org/schema/mule/ee/wmq" xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:jms="http://www.mulesoft.org/schema/mule/jms" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/ee/wmq http://www.mulesoft.org/schema/mule/ee/wmq/current/mule-wmq-ee.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd
+http://www.mulesoft.org/schema/mule/xml http://www.mulesoft.org/schema/mule/xml/current/mule-xml.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mule/scripting/current/mule-scripting.xsd
+http://www.mulesoft.org/schema/mule/quartz http://www.mulesoft.org/schema/mule/quartz/current/mule-quartz.xsd">
+    <flow name="activeMQConsumer-V1Flow">
+        <jms:inbound-endpoint queue="ArtistsQueue" connector-ref="Active_MQ" doc:name="JMS"/>
+        <dw:transform-message doc:name="Transform Message">
+            <dw:input-payload doc:sample="Message_2.dwl"/>
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/csv
+---
+[payload]]]></dw:set-payload>
+        </dw:transform-message>
+        <object-to-string-transformer doc:name="Object to String"/>
+        <set-variable variableName="Data" value="#[payload]" doc:name="Content"/>
+      <!--   <jms:selector expression="File_UID='#[message.id]'"/>
+        </jms:inbound-endpoint>-->
+        <set-variable variableName="File_ID" value="#[message.inboundProperties.File_UID]" doc:name="FileUID"/>
+        <component class="com.appintegrators.training.corejava.util.FileValidation" doc:name="Java"/>
+        <choice doc:name="Choice">
+            <when expression="#[payload==false]">
+                <set-payload value="#[flowVars.Data]" doc:name="File Does not Exist!!!"/>
+                <file:outbound-endpoint path="${OUTPUT_DIR}" outputPattern="${FILE_NAME}"  responseTimeout="10000" doc:name="Creating a NewFile and Appending Data" connector-ref="File1"/>
+            </when>
+            <otherwise>
+                <set-payload value="#[flowVars.Data]" doc:name="File Exists!!!"/>
+                <file:outbound-endpoint path="${OUTPUT_DIR}" outputPattern="${FILE_NAME}"  responseTimeout="10000" doc:name="AppendingDataToExistingFile" connector-ref="File"/>
+            </otherwise>
+        </choice>
+        <logger message="Successfully Consumed!!!" level="INFO" doc:name="Logger"/>
+    </flow>
+</mule>
