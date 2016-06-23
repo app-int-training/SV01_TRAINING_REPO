@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:wmq="http://www.mulesoft.org/schema/mule/ee/wmq" xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:jms="http://www.mulesoft.org/schema/mule/jms" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
+http://www.mulesoft.org/schema/mule/ee/wmq http://www.mulesoft.org/schema/mule/ee/wmq/current/mule-wmq-ee.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd">
+    <validation:config name="Validation_Configuration" doc:name="Validation Configuration"/>
+    <flow name="Using_JavaComponent_activeMQPublisher-V1Flow">
+        <file:inbound-endpoint path="${INPUT_DIR}" moveToDirectory="${OUTPUT_DIR}" connector-ref="File" pollingFrequency="${POLLING_FREQUENCY}" fileAge="${FILE_AGE}" responseTimeout="10000" doc:name="File"/>
+        <choice doc:name="Choice">
+            <when expression="#[message.inboundProperties.OriginalFilename.matches('ArtistData_[0-9]{8}.csv')==true]">
+                <logger message="********Success*********" level="INFO" doc:name="Success"/>
+                <component class="com.appintegrators.training.corejava.util.ArtistParser" doc:name="Java"/>
+                <set-session-variable variableName="UID" value="#[message.inboundProperties.OriginalFilename.substring(11,19)]" doc:name="UID"/>
+                <foreach collection="#[payload]" doc:name="For Each">
+                    <logger message="Payload Number #[counter]: #[payload]" level="INFO" doc:name="Logger"/>
+                    <jms:outbound-endpoint queue="ArtistsQueue" connector-ref="Active_MQ" doc:name="JMS">
+                 <message-properties-transformer>
+                    <add-message-property key="File_UID" value="#[sessionVars.UID]"/>
+                    </message-properties-transformer>
+                    </jms:outbound-endpoint>
+                </foreach>
+            </when>
+            <otherwise>
+                <logger message="*******Failed********File Moved to Error Directory." level="INFO" doc:name="Failure"/>
+                <file:outbound-endpoint path="${ERROR_DIR}" connector-ref="File" responseTimeout="10000" doc:name="Error_Directory" outputPattern="${FILEPATTERN}"/>
+            </otherwise>
+        </choice>
+        <logger level="INFO" doc:name="Logger" message="Successfully Published!!!"/>
+    </flow>
+</mule>
